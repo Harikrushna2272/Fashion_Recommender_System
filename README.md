@@ -2,12 +2,18 @@
 
 A deep learning-based fashion recommendation system using ResNet and nearest neighbor search.
 
-## Features
+## Project Description
 
-- Deep learning-based image feature extraction
-- Fast nearest neighbor search for recommendations
-- Support for custom fashion datasets
-- Easy to train and deploy
+The Fashion Recommendation System is an AI-powered solution that helps users discover clothing items similar to their preferences. It uses deep learning and computer vision techniques to analyze fashion images and provide personalized recommendations based on visual similarity.
+
+## Key-Features
+
+- Visual similarity-based recommendations
+- Deep learning feature extraction
+- Fast nearest neighbor search
+- Support for multiple categories of clothing
+- Interactive user interface
+- Real-time recommendations
 
 # project structur
 
