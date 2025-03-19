@@ -1,61 +1,73 @@
+# src/recommender.py
+import cv2
 import numpy as np
-from annoy import AnnoyIndex
 import pickle
-from typing import List, Tuple
+import pandas as pd
+from sklearn.metrics.pairwise import cosine_similarity
+from typing import List, Dict
 
 class FashionRecommender:
     def __init__(self, config):
         self.config = config
         self.embedding_size = config['model']['embedding_size']
-        self.annoy_index = AnnoyIndex(self.embedding_size, 'angular')
+        # FLANN parameters: using KDTree (algorithm=1)
+        self.index_params = dict(algorithm=1, trees=5)
+        self.search_params = dict(checks=50)
+        self.flann = cv2.FlannBasedMatcher(self.index_params, self.search_params)
         self.items_data = None
+        self.embeddings = None
 
     def build_index(self, embeddings: np.ndarray, items_data: pd.DataFrame):
-        """Build the similarity index"""
+        """Build the similarity index using FLANN."""
         try:
-            for i, embedding in enumerate(embeddings):
-                self.annoy_index.add_item(i, embedding)
-            self.annoy_index.build(100)  # 100 trees
-            self.items_data = items_data
-            print("Similarity index built successfully")
+            self.embeddings = embeddings.astype(np.float32)
+            # FLANN requires a list of arrays; we pass the embeddings array as one dataset
+            self.flann.add([self.embeddings])
+            self.flann.train()
+            self.items_data = items_data.reset_index(drop=True)
+            print("FLANN index built successfully.")
         except Exception as e:
-            print(f"Error building index: {str(e)}")
+            print(f"Error building FLANN index: {e}")
 
-    def get_recommendations(self, query_embedding: np.ndarray, n_recommendations: int = 5) -> List[dict]:
-        """Get recommendations for a query embedding"""
+    def get_recommendations(self, query_embedding: np.ndarray, n_recommendations: int = 5) -> List[Dict]:
+        """Get recommendations for a query embedding using FLANN."""
         try:
-            similar_indices = self.annoy_index.get_nns_by_vector(
-                query_embedding, n_recommendations + 1)[1:]
+            query_embedding = query_embedding.astype(np.float32)
+            matches = self.flann.knnMatch(query_embedding, self.embeddings, k=n_recommendations)
             recommendations = []
-            for idx in similar_indices:
-                item = self.items_data.iloc[idx]
+            # Re-rank using cosine similarity if desired
+            candidate_embeddings = np.array([self.embeddings[m.trainIdx] for m in matches[0]])
+            cos_sim = cosine_similarity(query_embedding.reshape(1, -1), candidate_embeddings).flatten()
+            sorted_indices = np.argsort(-cos_sim)
+            for idx in sorted_indices:
+                actual_index = matches[0][idx].trainIdx
+                item = self.items_data.iloc[actual_index]
                 recommendations.append({
-                    'id': idx,
                     'item': item['item_name'],
                     'category': item['category'],
-                    'similarity_score': 1 - self.annoy_index.get_distance(0, idx)
+                    'similarity_score': cos_sim[idx]
                 })
             return recommendations
         except Exception as e:
-            print(f"Error getting recommendations: {str(e)}")
+            print(f"Error getting recommendations: {e}")
             return []
 
     def save_index(self):
-        """Save the index and items data"""
+        """Save the FLANN index and associated items data."""
         try:
-            self.annoy_index.save(f"{self.config['paths']['processed_dir']}/fashion.ann")
-            with open(f"{self.config['paths']['processed_dir']}/items_data.pkl", 'wb') as f:
-                pickle.dump(self.items_data, f)
-            print("Index saved successfully")
+            index_path = self.config['paths']['index_path']
+            with open(index_path, 'wb') as f:
+                pickle.dump((self.flann, self.items_data, self.embeddings), f)
+            print("FLANN index saved successfully.")
         except Exception as e:
-            print(f"Error saving index: {str(e)}")
+            print(f"Error saving FLANN index: {e}")
 
     def load_index(self):
-        """Load the index and items data"""
+        """Load the FLANN index and associated items data."""
         try:
-            self.annoy_index.load(f"{self.config['paths']['processed_dir']}/fashion.ann")
-            with open(f"{self.config['paths']['processed_dir']}/items_data.pkl", 'rb') as f:
-                self.items_data = pickle.load(f)
-            print("Index loaded successfully")
+            index_path = self.config['paths']['index_path']
+            with open(index_path, 'rb') as f:
+                self.flann, self.items_data, self.embeddings = pickle.load(f)
+            print("FLANN index loaded successfully.")
         except Exception as e:
-            print(f"Error loading index: {str(e)}")
+            print(f"Error loading FLANN index: {e}")

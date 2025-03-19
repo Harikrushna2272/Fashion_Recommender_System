@@ -26,6 +26,14 @@ fashion-recommender/
 ├── requirements.txt   # Dependencies
 └── README.md         # Documentation
 
+## Usage:
+
+- Training & Building Index:
+Run python main.py --train to train the model and build the recommendation index.
+- Recommendation via CLI:
+Run python main.py --recommend path/to/sample.jpg to get recommendations for a given image.
+- Interactive API:
+Run uvicorn src.web_app:app --reload to start the REST API and access the recommendation endpoint.
 
 
 ## Installation

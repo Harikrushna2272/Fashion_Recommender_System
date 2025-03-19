@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+torch
+torchvision
+fastai
+opencv-python-headless
+annoy
+numpy
+pandas
+scikit-learn
+Pillow
+pyyaml
+textblob
+requests

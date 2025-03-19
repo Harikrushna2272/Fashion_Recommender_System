@@ -1,0 +1,22 @@
+# config.yaml
+paths:
+  data_dir: "data/images"              # Directory containing images and dataset CSV file
+  processed_dir: "models"              # Directory to save processed data and index
+  model_save_path: "models/resnet18_fashion.pth"
+  index_path: "models/flann_index.pkl" # File path for the FLANN index
+
+data:
+  image_size: 224
+  train_split: 0.8
+  random_seed: 42
+
+model:
+  name: "resnet18"
+  pretrained: true
+  embedding_size: 512
+  batch_size: 32
+  num_epochs: 10
+  learning_rate: 0.001
+
+recommender:
+  num_neighbors: 5
