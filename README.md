@@ -31,7 +31,7 @@ Fashion_Recommender_System/
 ## **🛠️ Installation**
 ### **1️⃣ Clone the repository**  
 ```bash
-git clone https://github.com/yourusername/Fashion_Recommender_System.git
+git clone https://github.com/Harikrushna2272/Fashion_Recommender_System.git
 cd Fashion_Recommender_System
 ```
   
